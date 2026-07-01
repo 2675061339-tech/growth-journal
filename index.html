@@ -1096,14 +1096,14 @@ function syncWeeklyDOM() {
   wCurrentTrigs = [];
   for (var ti = 0; ti < wtGroups.length; ti++) {
     wCurrentTrigs.push({
-      event: wtGroups[ti].querySelector('[data-wtsub="event"]').value,
-      thought: wtGroups[ti].querySelector('[data-wtsub="thought"]').value
+      event: wtGroups[ti].querySelector('[data-wsub="event"]').value,
+      thought: wtGroups[ti].querySelector('[data-wsub="thought"]').value
     });
   }
   if (wCurrentTrigs.length === 0) wCurrentTrigs.push({event:'', thought:''});
 
   // Sync needs
-  var wnGroups = document.querySelectorAll('#wneed-list-container .pair-group');
+  var wnGroups = document.querySelectorAll('#wneed-list-container .need-group');
   wCurrentNeeds = [];
   for (var ni = 0; ni < wnGroups.length; ni++) {
     wCurrentNeeds.push({
