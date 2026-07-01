@@ -945,6 +945,42 @@ var currentLifes = [];
 var currentSelfs = [];
 var currentPairs = [];
 
+/** Read all current DOM values back into memory arrays before re-rendering */
+function syncDailyDOM() {
+  // Sync tasks
+  var taskInputs = document.querySelectorAll('#task-list-container [data-field="tasks"]');
+  currentTasks = [];
+  for (var ti = 0; ti < taskInputs.length; ti++) currentTasks.push(taskInputs[ti].value);
+  if (currentTasks.length === 0) currentTasks.push('');
+
+  // Sync life moments (text + img)
+  var lifeAreas = document.querySelectorAll('#life-list-container .dynamic-item');
+  currentLifes = [];
+  for (var li = 0; li < lifeAreas.length; li++) {
+    var ta = lifeAreas[li].querySelector('textarea');
+    var imgArea = lifeAreas[li].parentElement.querySelector('.life-image-area.has-image img');
+    currentLifes.push({ text: ta ? ta.value : '', img: imgArea ? imgArea.src : '' });
+  }
+  if (currentLifes.length === 0) currentLifes.push({ text:'', img:'' });
+
+  // Sync self observations
+  var selfTextareas = document.querySelectorAll('#self-list-container [data-field="selfObservations"]');
+  currentSelfs = [];
+  for (var si = 0; si < selfTextareas.length; si++) currentSelfs.push(selfTextareas[si].value);
+  if (currentSelfs.length === 0) currentSelfs.push('');
+
+  // Sync worry pairs
+  var pairGroups = document.querySelectorAll('#worry-list-container .pair-group');
+  currentPairs = [];
+  for (var pi = 0; pi < pairGroups.length; pi++) {
+    currentPairs.push({
+      worry: pairGroups[pi].querySelector('[data-subfield="worry"]').value,
+      reality: pairGroups[pi].querySelector('[data-subfield="reality"]').value
+    });
+  }
+  if (currentPairs.length === 0) currentPairs.push({ worry:'', reality:'' });
+}
+
 /** Render daily form from data object */
 function renderDailyForm(dataObj) {
   var tc = document.getElementById('task-list-container'); tc.innerHTML = '';
@@ -969,10 +1005,10 @@ function renderDailyForm(dataObj) {
   document.getElementById('d-invest').value = dataObj.invest || '';
 }
 
-function addTaskItem() { currentTasks.push(''); renderSingleList('task-list-container', createTaskHTML, currentTasks); }
-function addLifeItem() { currentLifes.push({ text:'', img:'' }); renderSingleList('life-list-container', createLifeHTML, currentLifes); }
-function addSelfItem() { currentSelfs.push(''); renderSingleList('self-list-container', createSelfHTML, currentSelfs); }
-function addWorryPair() { currentPairs.push({ worry:'', reality:'' }); renderSingleList('worry-list-container', createWorryHTML, currentPairs); }
+function addTaskItem() { syncDailyDOM(); currentTasks.push(''); renderSingleList('task-list-container', createTaskHTML, currentTasks); }
+function addLifeItem() { syncDailyDOM(); currentLifes.push({ text:'', img:'' }); renderSingleList('life-list-container', createLifeHTML, currentLifes); }
+function addSelfItem() { syncDailyDOM(); currentSelfs.push(''); renderSingleList('self-list-container', createSelfHTML, currentSelfs); }
+function addWorryPair() { syncDailyDOM(); currentPairs.push({ worry:'', reality:'' }); renderSingleList('worry-list-container', createWorryHTML, currentPairs); }
 
 function renderSingleList(containerId, htmlFn, arr) {
   var c = document.getElementById(containerId); c.innerHTML = '';
@@ -984,13 +1020,13 @@ function removeDynamicItem(btn, type) {
   var input = wrapper.querySelector('[data-idx]');
   var idx = input ? parseInt(input.dataset.idx) : -1;
 
-  if (type === 'task' && currentTasks.length > 1) { currentTasks.splice(idx,1); renderSingleList('task-list-container', createTaskHTML, currentTasks); }
-  else if (type === 'life' && currentLifes.length > 1) { currentLifes.splice(idx,1); renderSingleList('life-list-container', createLifeHTML, currentLifes); }
-  else if (type === 'self' && currentSelfs.length > 1) { currentSelfs.splice(idx,1); renderSingleList('self-list-container', createSelfHTML, currentSelfs); }
+  if (type === 'task' && currentTasks.length > 1) { syncDailyDOM(); currentTasks.splice(idx,1); renderSingleList('task-list-container', createTaskHTML, currentTasks); }
+  else if (type === 'life' && currentLifes.length > 1) { syncDailyDOM(); currentLifes.splice(idx,1); renderSingleList('life-list-container', createLifeHTML, currentLifes); }
+  else if (type === 'self' && currentSelfs.length > 1) { syncDailyDOM(); currentSelfs.splice(idx,1); renderSingleList('self-list-container', createSelfHTML, currentSelfs); }
 }
 
 function removeWorryPair(idx) {
-  if (currentPairs.length > 1) { currentPairs.splice(idx,1); renderSingleList('worry-list-container', createWorryHTML, currentPairs); }
+  if (currentPairs.length > 1) { syncDailyDOM(); currentPairs.splice(idx,1); renderSingleList('worry-list-container', createWorryHTML, currentPairs); }
 }
 
 // ========== Weekly Dynamic List Builders ==========
@@ -1048,6 +1084,52 @@ var wCurrentNeeds = [];
 var wCurrentFocus = [];
 var wCurrentPlans = [];
 
+/** Read all current weekly DOM values back into memory arrays before re-rendering */
+function syncWeeklyDOM() {
+  // Sync growths
+  var wgInputs = document.querySelectorAll('#wgrowth-list-container [data-wfield="growths"]');
+  wCurrentGrows = []; for (var gi = 0; gi < wgInputs.length; gi++) wCurrentGrows.push(wgInputs[gi].value);
+  if (wCurrentGrows.length === 0) wCurrentGrows.push('');
+
+  // Sync triggers
+  var wtGroups = document.querySelectorAll('#wtrigger-list-container .pair-group');
+  wCurrentTrigs = [];
+  for (var ti = 0; ti < wtGroups.length; ti++) {
+    wCurrentTrigs.push({
+      event: wtGroups[ti].querySelector('[data-wtsub="event"]').value,
+      thought: wtGroups[ti].querySelector('[data-wtsub="thought"]').value
+    });
+  }
+  if (wCurrentTrigs.length === 0) wCurrentTrigs.push({event:'', thought:''});
+
+  // Sync needs
+  var wnGroups = document.querySelectorAll('#wneed-list-container .pair-group');
+  wCurrentNeeds = [];
+  for (var ni = 0; ni < wnGroups.length; ni++) {
+    wCurrentNeeds.push({
+      surface: wnGroups[ni].querySelector('[data-wnsub="surface"]').value,
+      deep: wnGroups[ni].querySelector('[data-wnsub="deep"]').value
+    });
+  }
+  if (wCurrentNeeds.length === 0) wCurrentNeeds.push({surface:'', deep:''});
+
+  // Sync focus
+  var wfInputs = document.querySelectorAll('#wfocus-list-container [data-wfield="focusList"]');
+  wCurrentFocus = []; for (var fi = 0; fi < wfInputs.length; fi++) wCurrentFocus.push(wfInputs[fi].value);
+  if (wCurrentFocus.length === 0) wCurrentFocus.push('');
+
+  // Sync plans
+  var wpGroups = document.querySelectorAll('#wplan-list-container .pair-group');
+  wCurrentPlans = [];
+  for (var pi = 0; pi < wpGroups.length; pi++) {
+    wCurrentPlans.push({
+      content: wpGroups[pi].querySelector('[data-wplsub="content"]').value,
+      time: wpGroups[pi].querySelector('[data-wplsub="time"]').value
+    });
+  }
+  if (wCurrentPlans.length === 0) wCurrentPlans.push({content:'', time:''});
+}
+
 /** Render weekly form from data object */
 function renderWeeklyForm(dataObj) {
   // W1 Growths
@@ -1076,28 +1158,28 @@ function renderWeeklyForm(dataObj) {
   for (var p = 0; p < wCurrentPlans.length; p++) pc.insertAdjacentHTML('beforeend', createWPlanHTML(wCurrentPlans[p], p));
 }
 
-function addWGrowthItem() { wCurrentGrows.push(''); renderSingleList('wgrowth-list-container', createWGrowthHTML, wCurrentGrows); }
-function addWTriggerPair() { wCurrentTrigs.push({event:'', thought:''}); renderSingleList('wtrigger-list-container', createWTriggerHTML, wCurrentTrigs); }
-function addWNeedPair() { wCurrentNeeds.push({surface:'', deep:''}); renderSingleList('wneed-list-container', createWNeedHTML, wCurrentNeeds); }
-function addWFocusItem() { wCurrentFocus.push(''); renderSingleList('wfocus-list-container', createWFocusHTML, wCurrentFocus); }
-function addWPlanPair() { wCurrentPlans.push({content:'', time:''}); renderSingleList('wplan-list-container', createWPlanHTML, wCurrentPlans); }
+function addWGrowthItem() { syncWeeklyDOM(); wCurrentGrows.push(''); renderSingleList('wgrowth-list-container', createWGrowthHTML, wCurrentGrows); }
+function addWTriggerPair() { syncWeeklyDOM(); wCurrentTrigs.push({event:'', thought:''}); renderSingleList('wtrigger-list-container', createWTriggerHTML, wCurrentTrigs); }
+function addWNeedPair() { syncWeeklyDOM(); wCurrentNeeds.push({surface:'', deep:''}); renderSingleList('wneed-list-container', createWNeedHTML, wCurrentNeeds); }
+function addWFocusItem() { syncWeeklyDOM(); wCurrentFocus.push(''); renderSingleList('wfocus-list-container', createWFocusHTML, wCurrentFocus); }
+function addWPlanPair() { syncWeeklyDOM(); wCurrentPlans.push({content:'', time:''}); renderSingleList('wplan-list-container', createWPlanHTML, wCurrentPlans); }
 
 function removeWDynamicItem(btn, type) {
   var wrapper = btn.closest('.dynamic-item');
   var input = wrapper.querySelector('[data-widx]');
   var idx = input ? parseInt(input.dataset.widx) : -1;
-  if (type === 'wgrowth' && wCurrentGrows.length > 1) { wCurrentGrows.splice(idx,1); renderSingleList('wgrowth-list-container', createWGrowthHTML, wCurrentGrows); }
-  else if (type === 'wfocus' && wCurrentFocus.length > 1) { wCurrentFocus.splice(idx,1); renderSingleList('wfocus-list-container', createWFocusHTML, wCurrentFocus); }
+  if (type === 'wgrowth' && wCurrentGrows.length > 1) { syncWeeklyDOM(); wCurrentGrows.splice(idx,1); renderSingleList('wgrowth-list-container', createWGrowthHTML, wCurrentGrows); }
+  else if (type === 'wfocus' && wCurrentFocus.length > 1) { syncWeeklyDOM(); wCurrentFocus.splice(idx,1); renderSingleList('wfocus-list-container', createWFocusHTML, wCurrentFocus); }
 }
 
 function removeWTriggerPair(idx) {
-  if (wCurrentTrigs.length > 1) { wCurrentTrigs.splice(idx,1); renderSingleList('wtrigger-list-container', createWTriggerHTML, wCurrentTrigs); }
+  if (wCurrentTrigs.length > 1) { syncWeeklyDOM(); wCurrentTrigs.splice(idx,1); renderSingleList('wtrigger-list-container', createWTriggerHTML, wCurrentTrigs); }
 }
 function removeWNeedPair(idx) {
-  if (wCurrentNeeds.length > 1) { wCurrentNeeds.splice(idx,1); renderSingleList('wneed-list-container', createWNeedHTML, wCurrentNeeds); }
+  if (wCurrentNeeds.length > 1) { syncWeeklyDOM(); wCurrentNeeds.splice(idx,1); renderSingleList('wneed-list-container', createWNeedHTML, wCurrentNeeds); }
 }
 function removeWPlanPair(idx) {
-  if (wCurrentPlans.length > 1) { wCurrentPlans.splice(idx,1); renderSingleList('wplan-list-container', createWPlanHTML, wCurrentPlans); }
+  if (wCurrentPlans.length > 1) { syncWeeklyDOM(); wCurrentPlans.splice(idx,1); renderSingleList('wplan-list-container', createWPlanHTML, wCurrentPlans); }
 }
 
 // ========== Image Upload ==========
